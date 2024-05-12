@@ -1,6 +1,6 @@
 # Model analysis project
 
-Our project is titled **PROJECT TITLE** and is about EXPLAIN.
+Our project is titled **Solving a Stochastic New-Keynesian Model** and is centered around running a simple New-Keynesian model using python-code, and interpretting the results.
 
 The **results** of the project can be seen from running [modelproject.ipynb](modelproject.ipynb).
 
