@@ -13,3 +13,6 @@ This repository contains
    
 3. *Model project.*
 - We model a stochastic New-Keyenesian model, add an extention to it, and show the results.
+
+4. *Exam project.*
+- We provide our solution to the given exam assignment.
