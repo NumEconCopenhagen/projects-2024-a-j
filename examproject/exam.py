@@ -300,6 +300,10 @@ class Problem3():
         return 0 <= r1 <= 1 and 0 <= r2 <= 1 and 0 <= r3 <= 1
 
     def solve(self):
+        '''
+        Calculates the barycentric coordinates of point y w.r.t. the triangles ABC and CDA, 
+        and returns which triangle y lies within
+        '''
         self.find_points()
         if self.A is None or self.B is None or self.C is None or self.D is None:
             return {"error": "Not enough points to form triangles."}
@@ -330,6 +334,9 @@ class Problem3():
         return result
 
     def compute_approximation(self, f):
+        '''
+        Calculates an approximation of f(y)
+        '''
         # First, solve to find the points and barycentric coordinates
         result = self.solve()
 
@@ -362,6 +369,9 @@ class Problem3():
         return f_approx, f_true
 
     def compute_approximations_for_set(self, Y, f):
+        '''
+        Calculates approximations of f(y) for all y in Y
+        '''
         results = []
         for point in Y:
             self.y = np.array(point)
