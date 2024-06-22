@@ -207,6 +207,185 @@ class Problem1():
         ax.set_zlabel('SWF')
         plt.show()
 
+class Problem2:
+    def __init__(self):
+        '''
+        Initialize the model with default parameters, seed and epsilon.
+        '''
+        self.par = SimpleNamespace()
+        self.par.J = 3
+        self.par.N = 10
+        self.par.K = 10000
+        self.par.F = np.arange(1, self.par.N + 1)
+        self.par.sigma = 2
+        self.par.v = np.array([1, 2, 3])
+        self.par.c = 1
+        
+        np.random.seed(1919)
+        self.epsilon = np.random.normal(0, self.par.sigma, (self.par.J, self.par.K))
+
+    def calculate_expected_utility(self):
+        '''
+        Calculating and displaying the expected utility and the average realized utility
+        '''
+        self.expected_utility = self.par.v + np.mean(self.epsilon)
+        self.realized_utility = self.par.v[:, None] + self.epsilon
+        self.average_realized_utility = np.mean(self.realized_utility, axis=1)
+        self.results = pd.DataFrame({
+            'Career Track': np.arange(1, self.par.J + 1),
+            'Expected Utility': self.expected_utility,
+            'Average Realized Utility': self.average_realized_utility
+        })
+        display(self.results)
+    
+    def calculate_prior_expected_utility(self, v_j, F_i, sigma, K):
+        '''
+        Calculating the prior given values - returns a numpy-array.
+        '''
+        epsilon_friend = np.random.normal(0, sigma, (self.par.J, F_i, K))
+        prior_expected_utility = v_j[:, None] + np.mean(epsilon_friend, axis=1)
+        return prior_expected_utility
+    
+    def simulate_process(self):
+        '''
+        Simulating the process for all F, and calculating career choices,
+        Furthermore, calculating individual expected utilities, and realized utilities.
+        '''
+
+        self.collected_prior_expected_utilities = []
+
+        for i in self.par.F:
+            prior_expected_utility = self.calculate_prior_expected_utility(self.par.v, i, self.par.sigma, self.par.K)
+            self.collected_prior_expected_utilities.append(np.mean(prior_expected_utility, axis=1))
+
+        self.career_choices = np.zeros((self.par.N, self.par.K), dtype=int)
+        self.ind_expected_utilities = np.zeros((self.par.N, self.par.K))
+        self.realized_utilities = np.zeros((self.par.N, self.par.K))
+
+        for i in range(self.par.N):
+            F_i = i + 1
+            prior_expected_utility = self.calculate_prior_expected_utility(self.par.v, F_i, self.par.sigma, self.par.K)
+            epsilon_graduate = np.random.normal(0, self.par.sigma, (self.par.J, self.par.K))
+            
+            for k in range(self.par.K):
+                j_star = np.argmax(prior_expected_utility[:, k])
+                self.career_choices[i, k] = j_star
+                self.ind_expected_utilities[i, k] = prior_expected_utility[j_star, k]
+                self.realized_utilities[i, k] = self.par.v[j_star] + epsilon_graduate[j_star, k]
+        
+        self.career_share = np.zeros((self.par.N, self.par.J))
+        self.average_ind_utility = np.zeros(self.par.N)
+        self.average_realized_utility = np.zeros(self.par.N)
+
+        for i in range(self.par.N):
+            for j in range(self.par.J):
+                self.career_share[i, j] = np.mean(self.career_choices[i] == j)
+            self.average_ind_utility[i] = np.mean(self.ind_expected_utilities[i])
+            self.average_realized_utility[i] = np.mean(self.realized_utilities[i])
+    
+    def plot_results(self):
+        '''
+        Plotting the results of the simulation
+        '''
+        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(18, 6))
+
+        width = 0.25
+        x = np.arange(self.par.N) + 1
+        axes[0].bar(x - width, self.career_share[:, 0], width, label='j = 1')
+        axes[0].bar(x, self.career_share[:, 1], width, label='j = 2')
+        axes[0].bar(x + width, self.career_share[:, 2], width, label='j = 3')
+        axes[0].set_xlabel('i')
+        axes[0].set_ylabel('Share Choosing Career')
+        axes[0].set_title('Share of Graduates Choosing Each Career')
+        axes[0].legend()
+
+        axes[1].plot(x, self.average_ind_utility, marker='o', label='Average Individual Expected Utility')
+        axes[1].plot(x, self.average_realized_utility, marker='o', label='Average Realized Utility')
+        axes[1].set_xlabel('i')
+        axes[1].set_ylabel('Utility')
+        axes[1].set_title('Average Utility')
+        axes[1].legend()
+        axes[1].grid(True)
+
+        plt.style.use('fivethirtyeight')
+        plt.tight_layout()
+        plt.show()
+    
+    def simulate_new_optimal_career_choice(self):
+        '''
+        Simulating the new optimal career choice after one year, including the cost of switching careers.
+        '''
+        self.new_career_choices = np.zeros((self.par.N, self.par.K), dtype=int)
+        self.new_ind_expected_utilities = np.zeros((self.par.N, self.par.K))
+        self.new_realized_utilities = np.zeros((self.par.N, self.par.K))
+
+        for i in range(self.par.N):
+            F_i = i + 1
+            prior_expected_utility = self.calculate_prior_expected_utility(self.par.v, F_i, self.par.sigma, self.par.K)
+            epsilon_graduate = np.random.normal(0, self.par.sigma, (self.par.J, self.par.K))
+            
+            for k in range(self.par.K):
+                j_star = np.argmax(prior_expected_utility[:, k])
+                initial_utility = self.par.v[j_star] + epsilon_graduate[j_star, k]
+                
+                new_prior_utility = prior_expected_utility - self.par.c
+                new_prior_utility[j_star] = initial_utility
+                
+                new_j_star = np.argmax(new_prior_utility[:, k])
+                self.new_career_choices[i, k] = new_j_star
+                self.new_ind_expected_utilities[i, k] = new_prior_utility[new_j_star, k]
+                self.new_realized_utilities[i, k] = self.par.v[new_j_star] + epsilon_graduate[new_j_star, k] - (self.par.c if new_j_star != j_star else 0)
+        
+        self.new_career_share = np.zeros((self.par.N, self.par.J))
+        self.new_average_ind_utility = np.zeros(self.par.N)
+        self.new_average_realized_utility = np.zeros(self.par.N)
+        self.switching_share = np.zeros((self.par.N, self.par.J))
+
+        for i in range(self.par.N):
+            for j in range(self.par.J):
+                self.new_career_share[i, j] = np.mean(self.new_career_choices[i] == j)
+            self.new_average_ind_utility[i] = np.mean(self.new_ind_expected_utilities[i])
+            self.new_average_realized_utility[i] = np.mean(self.new_realized_utilities[i])
+            
+            for j in range(self.par.J):
+                self.switching_share[i, j] = np.mean((self.career_choices[i] == j) & (self.new_career_choices[i] != j))
+
+    def plot_new_results(self):
+        '''
+        Plotting the results of the new simulation
+        '''
+        fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(24, 8))
+
+        width = 0.25
+        x = np.arange(self.par.N) + 1
+        axes[0].bar(x - width, self.new_career_share[:, 0], width, label='j = 1')
+        axes[0].bar(x, self.new_career_share[:, 1], width, label='j = 2')
+        axes[0].bar(x + width, self.new_career_share[:, 2], width, label='j = 3')
+        axes[0].set_xlabel('i')
+        axes[0].set_ylabel('Share Choosing Career')
+        axes[0].set_title('Share of Graduates Choosing Each Career After One Year')
+        axes[0].legend()
+
+        axes[1].plot(x, self.new_average_ind_utility, marker='o', label='Average Individual Expected Utility')
+        axes[1].plot(x, self.new_average_realized_utility, marker='o', label='Average Realized Utility')
+        axes[1].set_xlabel('i')
+        axes[1].set_ylabel('Utility')
+        axes[1].set_title('Average Utility After One Year')
+        axes[1].legend()
+        axes[1].grid(True)
+
+        for j in range(self.par.J):
+            axes[2].plot(x, self.switching_share[:, j], marker='o', label=f'Switched from j = {j + 1}')
+        axes[2].set_xlabel('i')
+        axes[2].set_ylabel('Switching Share')
+        axes[2].set_title('Share of Graduates Switching Careers After One Year')
+        axes[2].legend()
+        axes[2].grid(True)
+
+        plt.style.use('fivethirtyeight')
+        plt.tight_layout()
+        plt.show()
+
 class Problem3():
     def __init__(self, random_seed=2024):
         '''
@@ -279,7 +458,6 @@ class Problem3():
         plt.xlabel('x1')
         plt.ylabel('x2')
         plt.legend()
-        plt.title('Points and Triangles')
         plt.grid(True)
         plt.show()
 
