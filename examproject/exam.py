@@ -207,3 +207,141 @@ class Problem1():
         ax.set_zlabel('SWF')
         plt.show()
 
+class Problem3():
+    def __init__(self, random_seed=2024):
+        self.rng = np.random.default_rng(random_seed)
+        self.X = self.rng.uniform(size=(50, 2))
+        self.y = None
+        self.A = None
+        self.B = None
+        self.C = None
+        self.D = None
+
+    def find_points(self):
+        y = self.y
+        X = self.X
+
+        def safe_min(sequence):
+            try:
+                return min(sequence, key=lambda x: np.linalg.norm(x - y))
+            except ValueError:
+                return None
+
+        self.A = safe_min((x for x in X if x[0] > y[0] and x[1] > y[1]))
+        self.B = safe_min((x for x in X if x[0] > y[0] and x[1] < y[1]))
+        self.C = safe_min((x for x in X if x[0] < y[0] and x[1] < y[1]))
+        self.D = safe_min((x for x in X if x[0] < y[0] and x[1] > y[1]))
+
+    def plot_points_and_triangles(self):
+        plt.figure(figsize=(8, 8))
+        plt.scatter(self.X[:, 0], self.X[:, 1], color='blue', label='Points in X')
+        plt.scatter(self.y[0], self.y[1], color='red', label='Point y', zorder=5)
+
+        if self.A is not None:
+            plt.scatter(*self.A, color='green', label='Point A', zorder=5)
+        if self.B is not None:
+            plt.scatter(*self.B, color='purple', label='Point B', zorder=5)
+        if self.C is not None:
+            plt.scatter(*self.C, color='orange', label='Point C', zorder=5)
+        if self.D is not None:
+            plt.scatter(*self.D, color='brown', label='Point D', zorder=5)
+
+        if self.A is not None and self.B is not None and self.C is not None:
+            plt.plot([self.A[0], self.B[0]], [self.A[1], self.B[1]], 'k-')
+            plt.plot([self.B[0], self.C[0]], [self.B[1], self.C[1]], 'k-')
+            plt.plot([self.C[0], self.A[0]], [self.C[1], self.A[1]], 'k-', label='Triangle ABC')
+
+        if self.C is not None and self.D is not None and self.A is not None:
+            plt.plot([self.C[0], self.D[0]], [self.C[1], self.D[1]], 'k--')
+            plt.plot([self.D[0], self.A[0]], [self.D[1], self.A[1]], 'k--', label='Triangle CDA')
+
+        plt.xlabel('x1')
+        plt.ylabel('x2')
+        plt.legend()
+        plt.title('Points and Triangles')
+        plt.grid(True)
+        plt.show()
+
+    def barycentric_coordinates(self, y, A, B, C):
+        denom = (B[1] - C[1]) * (A[0] - C[0]) + (C[0] - B[0]) * (A[1] - C[1])
+        r1 = ((B[1] - C[1]) * (y[0] - C[0]) + (C[0] - B[0]) * (y[1] - C[1])) / denom
+        r2 = ((C[1] - A[1]) * (y[0] - C[0]) + (A[0] - C[0]) * (y[1] - C[1])) / denom
+        r3 = 1 - r1 - r2
+        return r1, r2, r3
+
+    def check_triangle(self, r1, r2, r3):
+        return 0 <= r1 <= 1 and 0 <= r2 <= 1 and 0 <= r3 <= 1
+
+    def solve(self):
+        self.find_points()
+        if self.A is None or self.B is None or self.C is None or self.D is None:
+            return {"error": "Not enough points to form triangles."}
+
+        rABC1, rABC2, rABC3 = self.barycentric_coordinates(self.y, self.A, self.B, self.C)
+        rCDA1, rCDA2, rCDA3 = self.barycentric_coordinates(self.y, self.C, self.D, self.A)
+
+        if self.check_triangle(rABC1, rABC2, rABC3):
+            containing_triangle = 'ABC'
+        elif self.check_triangle(rCDA1, rCDA2, rCDA3):
+            containing_triangle = 'CDA'
+        else:
+            containing_triangle = 'None'
+
+        self.plot_points_and_triangles()
+
+        result = {
+            "A": self.A,
+            "B": self.B,
+            "C": self.C,
+            "D": self.D,
+            "y": self.y,
+            "rABC": (rABC1, rABC2, rABC3),
+            "rCDA": (rCDA1, rCDA2, rCDA3),
+            "containing_triangle": containing_triangle
+        }
+
+        return result
+
+    def compute_approximation(self, f):
+        # First, solve to find the points and barycentric coordinates
+        result = self.solve()
+
+        if "error" in result:
+            return None, None
+
+        # Get the barycentric coordinates and the containing triangle
+        rABC = result["rABC"]
+        rCDA = result["rCDA"]
+        containing_triangle = result["containing_triangle"]
+
+        if containing_triangle == "ABC":
+            # Calculate the approximation of f(y) using triangle ABC
+            fA = f(self.A)
+            fB = f(self.B)
+            fC = f(self.C)
+            f_approx = rABC[0] * fA + rABC[1] * fB + rABC[2] * fC
+        elif containing_triangle == "CDA":
+            # Calculate the approximation of f(y) using triangle CDA
+            fC = f(self.C)
+            fD = f(self.D)
+            fA = f(self.A)
+            f_approx = rCDA[0] * fC + rCDA[1] * fD + rCDA[2] * fA
+        else:
+            return None, None
+
+        # Calculate the true value of f(y)
+        f_true = f(self.y)
+
+        return f_approx, f_true
+
+    def compute_approximations_for_set(self, Y, f):
+        results = []
+        for point in Y:
+            self.y = np.array(point)
+            f_approx, f_true = self.compute_approximation(f)
+            if f_approx is not None and f_true is not None:
+                results.append((point, f_approx, f_true))
+            else:
+                results.append((point, None, None))
+        return results
+
