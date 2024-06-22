@@ -36,7 +36,6 @@ class Problem1():
         par.T = 0.0
         par.kappa = 0.1
     
-<<<<<<< HEAD
     def optimal_labor(self, w, p):
         '''
         Defining the optimal labor supply in the economy
@@ -207,14 +206,4 @@ class Problem1():
         ax.set_ylabel('T')
         ax.set_zlabel('SWF')
         plt.show()
-=======
-    def 
-
-
-
-class Problem2():
-
-
-
->>>>>>> b62f2391993f4ee7be60c1822927f480a144be0b
 
