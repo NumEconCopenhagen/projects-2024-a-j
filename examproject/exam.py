@@ -211,7 +211,7 @@ class Problem3():
     def __init__(self, random_seed=2024):
         self.rng = np.random.default_rng(random_seed)
         self.X = self.rng.uniform(size=(50, 2))
-        self.y = None
+        self.y = self.rng.uniform(size=(2, ))
         self.A = None
         self.B = None
         self.C = None
