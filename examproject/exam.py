@@ -230,6 +230,7 @@ class Problem2:
         '''
         Initialize the model with default parameters, seed and epsilon.
         '''
+        # Initialize parameters
         self.par = SimpleNamespace()
         self.par.J = 3
         self.par.N = 10
@@ -238,29 +239,37 @@ class Problem2:
         self.par.sigma = 2
         self.par.v = np.array([1, 2, 3])
         self.par.c = 1
-        
+
+        # Set random seed for reproducibility
         np.random.seed(1919)
+        # Generate epsilon values
         self.epsilon = np.random.normal(0, self.par.sigma, (self.par.J, self.par.K))
 
     def calculate_expected_utility(self):
         '''
         Calculating and displaying the expected utility and the average realized utility
         '''
+        # Calculate expected utility
         self.expected_utility = self.par.v + np.mean(self.epsilon)
+        # Calculate realized utility
         self.realized_utility = self.par.v[:, None] + self.epsilon
         self.average_realized_utility = np.mean(self.realized_utility, axis=1)
+        # Store results in a DataFrame
         self.results = pd.DataFrame({
             'Career Track': np.arange(1, self.par.J + 1),
             'Expected Utility': self.expected_utility,
             'Average Realized Utility': self.average_realized_utility
         })
+        # Display results
         display(self.results)
     
     def calculate_prior_expected_utility(self, v_j, F_i, sigma, K):
         '''
         Calculating the prior given values - returns a numpy-array.
         '''
+        # Generate noise
         epsilon_friend = np.random.normal(0, sigma, (self.par.J, F_i, K))
+        # Calculate expected utility
         prior_expected_utility = v_j[:, None] + np.mean(epsilon_friend, axis=1)
         return prior_expected_utility
     
@@ -270,31 +279,38 @@ class Problem2:
         Furthermore, calculating individual expected utilities, and realized utilities.
         '''
 
+        # List to store value
         self.collected_prior_expected_utilities = []
 
+        # Calculate prior expected utilities for all F
         for i in self.par.F:
             prior_expected_utility = self.calculate_prior_expected_utility(self.par.v, i, self.par.sigma, self.par.K)
             self.collected_prior_expected_utilities.append(np.mean(prior_expected_utility, axis=1))
 
+        # Initialize arrays for values
         self.career_choices = np.zeros((self.par.N, self.par.K), dtype=int)
         self.ind_expected_utilities = np.zeros((self.par.N, self.par.K))
         self.realized_utilities = np.zeros((self.par.N, self.par.K))
 
+        # Simulate career choices
         for i in range(self.par.N):
             F_i = i + 1
             prior_expected_utility = self.calculate_prior_expected_utility(self.par.v, F_i, self.par.sigma, self.par.K)
             epsilon_graduate = np.random.normal(0, self.par.sigma, (self.par.J, self.par.K))
             
+            # Choose highest utility
             for k in range(self.par.K):
                 j_star = np.argmax(prior_expected_utility[:, k])
                 self.career_choices[i, k] = j_star
                 self.ind_expected_utilities[i, k] = prior_expected_utility[j_star, k]
                 self.realized_utilities[i, k] = self.par.v[j_star] + epsilon_graduate[j_star, k]
         
+        # Initialize arrays for values
         self.career_share = np.zeros((self.par.N, self.par.J))
         self.average_ind_utility = np.zeros(self.par.N)
         self.average_realized_utility = np.zeros(self.par.N)
 
+        # Shares and utilities
         for i in range(self.par.N):
             for j in range(self.par.J):
                 self.career_share[i, j] = np.mean(self.career_choices[i] == j)
@@ -305,8 +321,10 @@ class Problem2:
         '''
         Plotting the results of the simulation
         '''
+        # Subplots
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(18, 6))
 
+        # Shares - careers
         width = 0.25
         x = np.arange(self.par.N) + 1
         axes[0].bar(x - width, self.career_share[:, 0], width, label='j = 1')
@@ -317,6 +335,7 @@ class Problem2:
         axes[0].set_title('Share of Graduates Choosing Each Career')
         axes[0].legend()
 
+        # Utilities
         axes[1].plot(x, self.average_ind_utility, marker='o', label='Average Individual Expected Utility')
         axes[1].plot(x, self.average_realized_utility, marker='o', label='Average Realized Utility')
         axes[1].set_xlabel('i')
@@ -333,38 +352,46 @@ class Problem2:
         '''
         Simulating the new optimal career choice after one year, including the cost of switching careers.
         '''
+        # Create arrays
         self.new_career_choices = np.zeros((self.par.N, self.par.K), dtype=int)
         self.new_ind_expected_utilities = np.zeros((self.par.N, self.par.K))
         self.new_realized_utilities = np.zeros((self.par.N, self.par.K))
 
+        # Simulate new career choice process
         for i in range(self.par.N):
             F_i = i + 1
             prior_expected_utility = self.calculate_prior_expected_utility(self.par.v, F_i, self.par.sigma, self.par.K)
             epsilon_graduate = np.random.normal(0, self.par.sigma, (self.par.J, self.par.K))
             
             for k in range(self.par.K):
+                #Initial career
                 j_star = np.argmax(prior_expected_utility[:, k])
                 initial_utility = self.par.v[j_star] + epsilon_graduate[j_star, k]
                 
+                # prior utility incl. costs
                 new_prior_utility = prior_expected_utility - self.par.c
                 new_prior_utility[j_star] = initial_utility
                 
+                # Choose new career by highest utility
                 new_j_star = np.argmax(new_prior_utility[:, k])
                 self.new_career_choices[i, k] = new_j_star
                 self.new_ind_expected_utilities[i, k] = new_prior_utility[new_j_star, k]
                 self.new_realized_utilities[i, k] = self.par.v[new_j_star] + epsilon_graduate[new_j_star, k] - (self.par.c if new_j_star != j_star else 0)
         
+        # Arrays for values
         self.new_career_share = np.zeros((self.par.N, self.par.J))
         self.new_average_ind_utility = np.zeros(self.par.N)
         self.new_average_realized_utility = np.zeros(self.par.N)
         self.switching_share = np.zeros((self.par.N, self.par.J))
 
+        # Calculate shares and utility
         for i in range(self.par.N):
             for j in range(self.par.J):
                 self.new_career_share[i, j] = np.mean(self.new_career_choices[i] == j)
             self.new_average_ind_utility[i] = np.mean(self.new_ind_expected_utilities[i])
             self.new_average_realized_utility[i] = np.mean(self.new_realized_utilities[i])
             
+            # Switching shares
             for j in range(self.par.J):
                 self.switching_share[i, j] = np.mean((self.career_choices[i] == j) & (self.new_career_choices[i] != j))
 
@@ -372,10 +399,13 @@ class Problem2:
         '''
         Plotting the results of the new simulation
         '''
+        # Subplots
         fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(24, 8))
 
         width = 0.25
         x = np.arange(self.par.N) + 1
+
+        # New shares
         axes[0].bar(x - width, self.new_career_share[:, 0], width, label='j = 1')
         axes[0].bar(x, self.new_career_share[:, 1], width, label='j = 2')
         axes[0].bar(x + width, self.new_career_share[:, 2], width, label='j = 3')
@@ -384,6 +414,7 @@ class Problem2:
         axes[0].set_title('Share of Graduates Choosing Each Career After One Year')
         axes[0].legend()
 
+        # New utilities
         axes[1].plot(x, self.new_average_ind_utility, marker='o', label='Average Individual Expected Utility')
         axes[1].plot(x, self.new_average_realized_utility, marker='o', label='Average Realized Utility')
         axes[1].set_xlabel('i')
@@ -392,6 +423,7 @@ class Problem2:
         axes[1].legend()
         axes[1].grid(True)
 
+        # Shares switching
         for j in range(self.par.J):
             axes[2].plot(x, self.switching_share[:, j], marker='o', label=f'Switched from j = {j + 1}')
         axes[2].set_xlabel('i')
