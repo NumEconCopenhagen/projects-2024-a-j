@@ -254,7 +254,8 @@ class Problem3():
         if self.C is not None and self.D is not None and self.A is not None:
             plt.plot([self.C[0], self.D[0]], [self.C[1], self.D[1]], 'k--')
             plt.plot([self.D[0], self.A[0]], [self.D[1], self.A[1]], 'k--', label='Triangle CDA')
-
+            
+        plt.style.use('fivethirtyeight')
         plt.xlabel('x1')
         plt.ylabel('x2')
         plt.legend()
