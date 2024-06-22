@@ -12,8 +12,8 @@ class Problem1():
         Initialize the model with default parameters
         kwargs allow any parameter in the par namespace to be overridden
         '''
-
-        self.par = par = SimpleNamespace() # Create a namespace object for parameters
+        # Create a namespace object for parameters
+        self.par = par = SimpleNamespace()
 
         # Set default parameters
         self.setup()
@@ -26,6 +26,7 @@ class Problem1():
         '''
         Set default parameters
         '''
+        # Parameters as given in the problem description
         par = self.par
         par.A = 1.0
         par.gamma = 0.5
@@ -38,8 +39,9 @@ class Problem1():
     
     def reset_parameters(self):
         '''
-        Methos for resetting parameters
+        Method for resetting parameters
         '''
+        # Resetting parameters to ensure reliable results
         self.setup()
 
 
@@ -55,6 +57,7 @@ class Problem1():
         Defining the optimal output in the economy
         '''
         par = self.par
+        # Define optimal ell as given in the problem description
         ell_star = self.optimal_labor(w, p)
         return par.A * (ell_star ** par.gamma)
     
@@ -63,6 +66,7 @@ class Problem1():
         Defining the optimal profits in the economy
         '''
         par = self.par
+        # Define optimal profits as given in the problem description
         return (1 - par.gamma) / par.gamma * w * (self.optimal_labor(w, p) ** (1 / (1 - par.gamma)))
     
     def consumer_behavior(self, w, p1, p2):
@@ -72,9 +76,14 @@ class Problem1():
         par = self.par
         pi1 = self.optimal_profits(w, p1)
         pi2 = self.optimal_profits(w, p2)
+        # Initial guess for c2 to calculate T
+        c2_initial_guess = 1.0  
+        par.T = par.tau * c2_initial_guess
         income = w * self.optimal_labor(w, p1) + par.T + pi1 + pi2
         c1 = par.alpha * income / p1
         c2 = (1 - par.alpha) * income / (p2 + par.tau)
+        # Update T to match the government constraint T = tau * c2
+        par.T = par.tau * c2 
         return c1, c2
 
     def utility(self, w, p1, p2):
@@ -84,8 +93,10 @@ class Problem1():
         par = self.par
         c1, c2 = self.consumer_behavior(w, p1, p2)
         ell = self.optimal_labor(w, p1)
+        # Ensure non-zero consumption
         c1 = max(c1, 1e-8)
         c2 = max(c2, 1e-8)
+        # Define househould utility as given in the problem description
         utility = np.log(c1 ** par.alpha * c2 ** (1 - par.alpha)) - par.nu * (ell ** (1 + par.epsilon)) / (1 + par.epsilon)
         return utility
 
@@ -93,12 +104,13 @@ class Problem1():
         '''
         Check market clearing for given price ranges
         '''
+        # Define price values within the linspace given in the problem description
         p1_vals = np.linspace(p1_range[0], p1_range[1], p1_range[2])
         p2_vals = np.linspace(p2_range[0], p2_range[1], p2_range[2])
-
+        # Initialize an empty list for results
         results = []
         clearing_conditions = []
-
+        # Loop over the price values and check market clearing
         for p1 in p1_vals:
             for p2 in p2_vals:
                 c1, c2 = self.consumer_behavior(w, p1, p2)
@@ -119,7 +131,7 @@ class Problem1():
                         'Check market clearing p1': market_clearing_p1,
                         'Check market clearing p2': market_clearing_p2
                     })
-        
+        # Store results in a pandas dataframe for neat output in notebook
         df = pd.DataFrame(results)
         df_clearing = pd.DataFrame(clearing_conditions)
 
@@ -130,10 +142,12 @@ class Problem1():
         Calculating excess demand for a given set of prices
         '''
         p1, p2 = prices
-        w = 1.0  # numeraire
+        # w is numeraire
+        w = 1.0
         c1, c2 = self.consumer_behavior(w, p1, p2)
         y1 = self.optimal_output(w, p1)
         y2 = self.optimal_output(w, p2)
+        # Calculate excess demand to check market clearing
         excess_demand_p1 = c1 - y1
         excess_demand_p2 = c2 - y2
         return [excess_demand_p1, excess_demand_p2]
@@ -143,14 +157,18 @@ class Problem1():
         Objective function used to minimize excess demand
         '''
         excess_demand = self.excess_demand(prices)
+        # Return sum of squared excess demands to ensure deviations contributing positively to the objective function
         return sum(ed**2 for ed in excess_demand)
 
     def find_equilibrium_prices(self, verbose=True):
         '''
         Minimization algorithm used to find the equilibrium prices by minimizing the excess demand
         '''
+        # Define initial guesses for the prices
         initial_guess = [2.0, 2.0]
+        # Calling a solver to minimize the objective function
         solution = minimize(self.objective_function, initial_guess, method='Nelder-Mead')
+        # Printing results if solution has been achieved
         if solution.success:
             equilibrium_prices = solution.x
             final_excess_demand = self.excess_demand(equilibrium_prices)
@@ -163,11 +181,12 @@ class Problem1():
     
     def swf(self, w, p1, p2):
         '''
-        Defining the Social Welfare Function (SWF) with the cost term -kappa y_2
+        Defining the Social Welfare Function (SWF)
         '''
         par = self.par
         utility = self.utility(w, p1, p2)
         y2 = self.optimal_output(w, p2)
+        # Defining SWF as given in the problem description
         swf = utility - par.kappa * y2
         return swf
 
@@ -175,22 +194,32 @@ class Problem1():
         '''
         Objective function to maximize SWF
         '''
-        tau, T = params
+        tau = params[0]
         self.par.tau = tau
-        self.par.T = T
-        w = 1.0  # numeraire
+        # numeraire
+        w = 1.0 
         equilibrium_prices = self.find_equilibrium_prices(verbose=False)
         p1, p2 = equilibrium_prices
-        return -self.swf(w, p1, p2)  # Negative because we minimize in scipy
+        _, c2 = self.consumer_behavior(w, p1, p2)
+        # Ensure the government constraint T = tau * c2 is satisfied
+        self.par.T = tau * c2 
+        # Return negative objective function because solver is minimizing
+        return -self.swf(w, p1, p2)
 
     def maximize_swf(self):
         '''
-        Maximizing algorithm which chooses the optimal tau and T values that maximize the SWF
+        Maximizing algorithm which chooses the optimal tau value that maximizes the SWF
         '''
-        initial_guess = [3, 3]
+        # Initial guess for optimal tau
+        initial_guess = [3]
+        # Calling a solver to maximize the objective function
         solution = minimize(self.objective_swf, initial_guess, method='Nelder-Mead')
+        # Print results if solution has been found
         if solution.success:
-            optimal_tau, optimal_T = solution.x
+            optimal_tau = solution.x[0]
+            _, c2 = self.consumer_behavior(1.0, *self.find_equilibrium_prices(verbose=False))
+            # Calculating T from the government constraint
+            optimal_T = optimal_tau * c2
             print(f"Optimal tau: {optimal_tau:.2f}, Optimal T: {optimal_T:.2f}")
             return optimal_tau, optimal_T
         else:
@@ -380,6 +409,7 @@ class Problem3():
         '''
         Initialize the class with the seed and the sample points given given in the problem description
         '''
+        # Define X and y as given by the sample code in the problem description
         self.rng = np.random.default_rng(random_seed)
         self.X = self.rng.uniform(size=(50, 2))
         self.y = self.rng.uniform(size=(2, ))
@@ -403,7 +433,7 @@ class Problem3():
 
         def safe_min(sequence):
             '''
-            Minimizes the Euclidean distance (sequence)
+            Minimizes the Euclidean distance, here called "sequence"
             '''
             sequence = list(sequence)
             if sequence:
@@ -454,6 +484,7 @@ class Problem3():
         '''
         Calculates the barycentric coordinates for given points
         '''
+        # Barycentric coodinates calculated using the formulas given in the problem description
         denom = (B[1] - C[1]) * (A[0] - C[0]) + (C[0] - B[0]) * (A[1] - C[1])
         r1 = ((B[1] - C[1]) * (y[0] - C[0]) + (C[0] - B[0]) * (y[1] - C[1])) / denom
         r2 = ((C[1] - A[1]) * (y[0] - C[0]) + (A[0] - C[0]) * (y[1] - C[1])) / denom
@@ -471,13 +502,14 @@ class Problem3():
         Calculates the barycentric coordinates of point y w.r.t. the triangles ABC and CDA, 
         and returns which triangle y lies within
         '''
+        # Ensuring all points exist
         self.find_points()
         if self.A is None or self.B is None or self.C is None or self.D is None:
             return {"error": "Not enough points to form triangles."}
 
         rABC1, rABC2, rABC3 = self.barycentric_coordinates(self.y, self.A, self.B, self.C)
         rCDA1, rCDA2, rCDA3 = self.barycentric_coordinates(self.y, self.C, self.D, self.A)
-
+        # Checks which triangle y lies within
         if self.check_triangle(rABC1, rABC2, rABC3):
             containing_triangle = 'ABC'
         elif self.check_triangle(rCDA1, rCDA2, rCDA3):
@@ -504,7 +536,7 @@ class Problem3():
         '''
         Calculates an approximation of f(y)
         '''
-        # First, solve to find the points and barycentric coordinates
+        # Solve to find the points and barycentric coordinates
         result = self.solve()
 
         if "error" in result:
@@ -514,15 +546,14 @@ class Problem3():
         rABC = result["rABC"]
         rCDA = result["rCDA"]
         containing_triangle = result["containing_triangle"]
-
+        # Calculate the approximation of f(y) using triangle ABC
         if containing_triangle == "ABC":
-            # Calculate the approximation of f(y) using triangle ABC
             fA = f(self.A)
             fB = f(self.B)
             fC = f(self.C)
             f_approx = rABC[0] * fA + rABC[1] * fB + rABC[2] * fC
+        # Calculate the approximation of f(y) using triangle CDA
         elif containing_triangle == "CDA":
-            # Calculate the approximation of f(y) using triangle CDA
             fC = f(self.C)
             fD = f(self.D)
             fA = f(self.A)
