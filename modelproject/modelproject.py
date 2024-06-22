@@ -7,7 +7,7 @@ plt.rcParams.update({"axes.grid":True,"grid.color":"black","grid.alpha":"0.25","
 plt.rcParams.update({'font.size': 14})
 
 
-# Define the model
+# Defining the model as a class
 class NewKeynesianModel():
 
     def __init__(self, **kwargs):
@@ -107,6 +107,9 @@ class NewKeynesianModel():
 
 
     def simulate_extended(self, seed=1000):
+        '''
+        Simulation of the extended model
+        '''
         par = self.par
         sim = self.sim
 
@@ -130,6 +133,9 @@ class NewKeynesianModel():
             sim.i[t] = par.phi * sim.pi[t] + par.phi_y * sim.y[t] + sim.epsilon_m[t]
 
     def plot_results_extended(self):
+        '''
+        Plot the results of the simulation of the extended model
+        '''
         sim = self.sim
         plt.figure(figsize=(12, 8))
         plt.plot(sim.y, label='Output ($y_t$)', color='blue')

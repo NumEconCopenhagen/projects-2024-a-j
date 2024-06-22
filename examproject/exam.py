@@ -36,6 +36,13 @@ class Problem1():
         par.T = 0.0
         par.kappa = 0.1
     
+    def reset_parameters(self):
+        '''
+        Methos for resetting parameters
+        '''
+        self.setup()
+
+
     def optimal_labor(self, w, p):
         '''
         Defining the optimal labor supply in the economy
@@ -188,24 +195,6 @@ class Problem1():
             return optimal_tau, optimal_T
         else:
             raise ValueError("Optimal tau and T not found.")
-    
-    def plot_swf(self, tau_range, T_range):
-        tau_vals = np.linspace(tau_range[0], tau_range[1], tau_range[2])
-        T_vals = np.linspace(T_range[0], T_range[1], T_range[2])
-        swf_vals = np.zeros((tau_range[2], T_range[2]))
-
-        for i, tau in enumerate(tau_vals):
-            for j, T in enumerate(T_vals):
-                swf_vals[i, j] = -self.objective_swf([tau, T])
-
-        tau_grid, T_grid = np.meshgrid(tau_vals, T_vals)
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ax.plot_surface(tau_grid, T_grid, swf_vals, cmap='viridis')
-        ax.set_xlabel('tau')
-        ax.set_ylabel('T')
-        ax.set_zlabel('SWF')
-        plt.show()
 
 class Problem2:
     def __init__(self):

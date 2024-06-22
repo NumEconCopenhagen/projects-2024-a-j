@@ -3,9 +3,13 @@ from scipy.optimize import minimize_scalar
 import numpy as np
 
 class ExchangeEconomyClass:
-    '''A class defining an Edgeworth economy'''
+    '''
+    A class defining an Edgeworth economy
+    '''
     def __init__(self):
-        '''Initialization of the class'''
+        '''
+        Initialization of the class
+        '''
 
         # parameter dictionary
         par = self.par = SimpleNamespace()
@@ -23,14 +27,18 @@ class ExchangeEconomyClass:
         par.w2bar = 1.0
 
     def baseline_utility_A(self):
-        '''Returns consumer A's baseline utility'''
+        '''
+        Returns consumer A's baseline utility
+        '''
 
         # define consumer A's baseline utility
         utility_A_baseline = self.utility_A(self.par.w1A, self.par.w2A)
         return utility_A_baseline
 
     def baseline_utility_B(self):
-        '''Returns consumer B's baseline utility'''
+        '''
+        Returns consumer B's baseline utility
+        '''
 
         # define consumer B's baseline utility
         utility_B_baseline = self.utility_B(self.par.w1B, self.par.w2B)
@@ -38,19 +46,25 @@ class ExchangeEconomyClass:
         return utility_B_baseline
     
     def utility_A(self,x1A,x2A):
-        '''Returns the utility of consumer A for a given allocation'''
+        '''
+        Returns the utility of consumer A for a given allocation
+        '''
 
         # utility of consumer A is defined
         return x1A ** self.par.alpha * x2A ** (1 - self.par.alpha)
 
     def utility_B(self,x1B,x2B):
-        '''Returns the utility of consumer B for a given allocation'''
+        '''
+        Returns the utility of consumer B for a given allocation
+        '''
 
         # utility of consumer B is defined
         return x1B ** self.par.beta * x2B ** (1 - self.par.beta)
     
     def utility_A_p1(self,p1):
-        '''Returns the utility of consumer A for a given p1'''
+        '''
+        Returns the utility of consumer A for a given p1
+        '''
 
         # consumer B's demand at price p1
         x1B, x2B = self.demand_B(p1)
@@ -65,7 +79,9 @@ class ExchangeEconomyClass:
         return -utility_A
     
     def objective_function(self, x):
-        '''Objective function used to maximize utility of consumer A'''
+        '''
+        Objective function used to maximize utility of consumer A
+        '''
 
         x1A, x2A = x
 
@@ -73,7 +89,9 @@ class ExchangeEconomyClass:
         return -self.utility_A(x1A, x2A)
     
     def aggregate_utility_objective(self,x):
-        '''Returns the aggregate utility of the two consumers'''
+        '''
+        Returns the aggregate utility of the two consumers
+        '''
 
         x1A, x2A = x
 
@@ -81,7 +99,9 @@ class ExchangeEconomyClass:
         return -(self.utility_A(x1A, x2A) + self.utility_B(1 - x1A, 1 - x2A))
     
     def demand_A(self,p1):
-        '''Returns consumer A's demand for good x1A and x2A for a given p1'''
+        '''
+        Returns consumer A's demand for good x1A and x2A for a given p1
+        '''
 
         # define budget constraint of consumer A
         budget_a = p1 * self.par.w1A + self.par.w2A
@@ -92,7 +112,9 @@ class ExchangeEconomyClass:
         return x1A, x2A
 
     def demand_B(self,p1):
-        '''Returns consumer B's demand for good x1B and x2B for a given p1'''
+        '''
+        Returns consumer B's demand for good x1B and x2B for a given p1
+        '''
 
         # define budget constraint of consumer B
         budget_b = p1 * self.par.w1B + self.par.w2B
@@ -104,7 +126,9 @@ class ExchangeEconomyClass:
         return x1B, x2B
 
     def check_market_clearing(self,p1):
-        '''Returns the errors in the market clearing condition for a given p1'''
+        '''
+        Returns the errors in the market clearing condition for a given p1
+        '''
 
         # define the demands
         x1A,x2A = self.demand_A(p1)
@@ -117,7 +141,9 @@ class ExchangeEconomyClass:
         return eps1,eps2
     
     def find_market_clearing_price(self, w1A, w2A):
-        '''Finds the market-clearing price given new endowments for consumer A'''
+        '''
+        Finds the market-clearing price given new endowments for consumer A
+        '''
 
         # set new endowments for consumer A
         self.par.w1A = w1A
@@ -130,6 +156,9 @@ class ExchangeEconomyClass:
         return res.x
     
     def error_sum(self, p1):
-        '''Returns the absolute sum of the errors for a given p1'''
+        '''
+        Returns the absolute sum of the errors for a given p1
+        '''
+    
         eps1, eps2 = self.check_market_clearing(p1)
         return abs(eps1) + abs(eps2)

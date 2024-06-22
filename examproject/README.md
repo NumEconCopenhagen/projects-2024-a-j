@@ -1,9 +1,9 @@
 # Exam project
 
-This project our solution to the given Written exam.
+This project presents our solution to the given written exam.
 The notebook contains Python code that solves the three given probelms:
 
-- Production economy and CO_{2} taxation  
+- Production economy and CO2 taxation  
 - Career choice model
 - Barycentric interpolation  
 

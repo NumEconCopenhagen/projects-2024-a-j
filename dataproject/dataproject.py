@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 def fetch_and_process_data():
-    
+    '''
+    Fetching data, creating dataframes and exporting as .csv files
+    '''
     # Lists to store data
     hour_dk_elspot = []
     price_dkk = []
@@ -73,7 +75,10 @@ def fetch_and_process_data():
 
 
 def print_descriptive_stats(merged_df):
-   
+    '''
+    Printing output for descriptive statistics table
+    '''
+
     # Calculating descriptive statistics
     descriptive_stats = merged_df.describe()
     
@@ -98,6 +103,9 @@ def print_descriptive_stats(merged_df):
     return styled_descriptive_stats
 
 def plot_series(elspot_prices_path, production_consumption_path):
+    '''
+    Printing figures
+    '''
     # Loading the data
     elspot_prices_df = pd.read_csv(elspot_prices_path, parse_dates=['HourDK'])
     production_consumption_df = pd.read_csv(production_consumption_path, parse_dates=['HourDK'])
