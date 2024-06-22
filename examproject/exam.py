@@ -27,3 +27,11 @@ class Problem1():
         par.kappa = 0.1
     
     def 
+
+
+
+class Problem2():
+
+
+
+
