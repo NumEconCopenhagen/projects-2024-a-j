@@ -209,6 +209,9 @@ class Problem1():
 
 class Problem3():
     def __init__(self, random_seed=2024):
+        '''
+        Initialize the class with the seed and the sample points given given in the problem description
+        '''
         self.rng = np.random.default_rng(random_seed)
         self.X = self.rng.uniform(size=(50, 2))
         self.y = self.rng.uniform(size=(2, ))
@@ -218,21 +221,38 @@ class Problem3():
         self.D = None
 
     def find_points(self):
+        '''
+        Finds the sets of points in X that minimizes the Euclidean distance between x and y points
+        '''
         y = self.y
         X = self.X
 
+        def distance(x, y):
+            '''
+            Defines the Euclidean distance between x and y points
+            '''
+            return np.sqrt((x[0] - y[0])**2 + (x[1] - y[1])**2)
+
         def safe_min(sequence):
-            try:
-                return min(sequence, key=lambda x: np.linalg.norm(x - y))
-            except ValueError:
+            '''
+            Minimizes the Euclidean distance (sequence)
+            '''
+            sequence = list(sequence)
+            if sequence:
+                return min(sequence, key=lambda x: distance(x, y))
+            else:
                 return None
 
+        # find points A, B, C, D using the given minimization conditions
         self.A = safe_min((x for x in X if x[0] > y[0] and x[1] > y[1]))
         self.B = safe_min((x for x in X if x[0] > y[0] and x[1] < y[1]))
         self.C = safe_min((x for x in X if x[0] < y[0] and x[1] < y[1]))
         self.D = safe_min((x for x in X if x[0] < y[0] and x[1] > y[1]))
 
     def plot_points_and_triangles(self):
+        '''
+        Plots all points and triangles in a combined plot
+        '''
         plt.figure(figsize=(8, 8))
         plt.scatter(self.X[:, 0], self.X[:, 1], color='blue', label='Points in X')
         plt.scatter(self.y[0], self.y[1], color='red', label='Point y', zorder=5)
@@ -264,6 +284,9 @@ class Problem3():
         plt.show()
 
     def barycentric_coordinates(self, y, A, B, C):
+        '''
+        Calculates the barycentric coordinates for given points
+        '''
         denom = (B[1] - C[1]) * (A[0] - C[0]) + (C[0] - B[0]) * (A[1] - C[1])
         r1 = ((B[1] - C[1]) * (y[0] - C[0]) + (C[0] - B[0]) * (y[1] - C[1])) / denom
         r2 = ((C[1] - A[1]) * (y[0] - C[0]) + (A[0] - C[0]) * (y[1] - C[1])) / denom
@@ -271,6 +294,9 @@ class Problem3():
         return r1, r2, r3
 
     def check_triangle(self, r1, r2, r3):
+        '''
+        Checks whether a set of barycentric coordinates corresponds to a point that lies inside a triangle.
+        '''
         return 0 <= r1 <= 1 and 0 <= r2 <= 1 and 0 <= r3 <= 1
 
     def solve(self):
