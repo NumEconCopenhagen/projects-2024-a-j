@@ -103,6 +103,7 @@ class NewKeynesianModel():
         plt.plot(sim.i, label='Interest Rate ($i_t$)')
         plt.legend()
         plt.title('Simulation of the New-Keynesian Model')
+        plt.style.use('fivethirtyeight')
         plt.show()
 
 
@@ -146,4 +147,5 @@ class NewKeynesianModel():
         plt.ylabel('Values')
         plt.legend()
         plt.grid(True)
+        plt.style.use('fivethirtyeight')
         plt.show()
